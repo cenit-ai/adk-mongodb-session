@@ -1,7 +1,7 @@
 # ADK MongoDB Session Service
 
 [![PyPI version](https://badge.fury.io/py/adk-mongodb-session.svg)](https://badge.fury.io/py/adk-mongodb-session)
-[![Python Package CI](https://github.com/your-username/adk-mongodb-session/actions/workflows/python-package.yml/badge.svg)](https://github.com/your-username/adk-mongodb-session/actions/workflows/python-package.yml)
+[![Python Package CI](https://github.com/SergeySetti/adk-mongodb-session/actions/workflows/python-package.yml/badge.svg)](https://github.com/SergeySetti/adk-mongodb-session/actions/workflows/python-package.yml)
 
 A session management library for the Google ADK framework that uses MongoDB as a backend.
 

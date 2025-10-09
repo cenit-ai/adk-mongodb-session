@@ -1,6 +1,6 @@
 [project]
 name = "adk-mongodb-session"
-version = "v1.0.2"
+version = "v1.0.3"
 description = "A project to integrate Google Ads API with MongoDB session management"
 readme = "README.md"
 requires-python = ">=3.11"
