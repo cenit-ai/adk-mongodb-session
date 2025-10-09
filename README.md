@@ -7,27 +7,12 @@ A session management library for the Google ADK framework that uses MongoDB as a
 
 This package provides a `MongodbSessionService` that implements the `google.adk.sessions.base_session_service.BaseSessionService` abstract base class. It allows you to store and manage session state in a MongoDB database, fully replicating the three-tiered state management (`app`, `user`, and `session`) found in the core ADK session services.
 
-## Features
-
--   **MongoDB Backend**: Persist session and state data in a MongoDB database.
--   **Tiered State Management**: Automatically manage state at the application, user, and session levels.
--   **ADK Integration**: Implements the `BaseSessionService` for seamless integration with the Google ADK framework.
--   **Async Support**: All service methods are asynchronous.
-
 ## Installation
 
 You can install the package from PyPI:
 
 ```bash
 pip install adk-mongodb-session
-```
-
-For development, clone the repository and install it in editable mode with the testing dependencies:
-
-```bash
-git clone https://github.com/your-username/adk-mongodb-session.git
-cd adk-mongodb-session
-pip install -e ".[test]"
 ```
 
 ## Usage
@@ -44,6 +29,7 @@ session_service = MongodbSessionService(
     database="my_adk_agent_db",
     collection_prefix="sessions"  # This will create sessions_sessions, sessions_app_states, etc.
 )
+
 # ... and then use it in your async context
 
 example_session = await session_service.create_session(
@@ -53,11 +39,14 @@ example_session = await session_service.create_session(
 )
 ```
 
+
 ## Running Tests
 
-To run the tests, first install the testing dependencies:
+For development, clone the repository and install it in editable mode with the testing dependencies:
 
 ```bash
+git clone https://github.com/your-username/adk-mongodb-session.git
+cd adk-mongodb-session
 pip install -e ".[test]"
 ```
 
