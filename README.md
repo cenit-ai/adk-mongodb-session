@@ -41,63 +41,16 @@ from adk_mongodb_session.mongodb.sessions import MongodbSessionService
 # Initialize the service
 session_service = MongodbSessionService(
     db_url="mongodb://localhost:27017/",
-    database="my_adk_app",
+    database="my_adk_agent_db",
     collection_prefix="sessions"  # This will create sessions_sessions, sessions_app_states, etc.
 )
+# ... and then use it in your async context
 
-async def main():
-    # Use the service to create, retrieve, and manage sessions
-    new_session = await session_service.create_session(
-        app_name="my_app",
-        user_id="user_123",
-    )
-    print(f"Created session with ID: {new_session.id}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-### Tiered State Management
-
-The service automatically handles the three-tiered state. When you create a session, you can provide state keys with the prefixes `app:` and `user:` to store data at the corresponding level. This state is automatically merged and made available in the `session.state` attribute.
-
-```python
-import asyncio
-from google.adk.sessions.state import State
-
-# ... (service initialization)
-
-async def main():
-    # Create a session with tiered state
-    session = await session_service.create_session(
-        app_name="my_app",
-        user_id="user_123",
-        state={
-            f"{State.APP_PREFIX}theme": "dark",
-            f"{State.USER_PREFIX}language": "en",
-            "session_specific_data": "foo"
-        }
-    )
-    
-    # The session object will have a merged view of the state
-    print(session.state)
-    # Expected output:
-    # {
-    #     'app:theme': 'dark',
-    #     'user:language': 'en',
-    *     'session_specific_data': 'foo'
-    # }
-
-    # Retrieve the session later
-    retrieved_session = await session_service.get_session(
-        app_name="my_app",
-        user_id="user_id_123",
-        session_id=session.id
-    )
-    print(retrieved_session.state) # Will also contain the merged state
-
-if __name__ == "__main__":
-    asyncio.run(main())
+example_session = await session_service.create_session(
+    app_name="my_app",
+    user_id="example_user",
+    state={"initial_key": "initial_value"} # State can be initialized
+)
 ```
 
 ## Running Tests
