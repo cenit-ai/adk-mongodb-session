@@ -2,7 +2,7 @@ import asyncio
 import unittest
 from unittest.mock import patch, MagicMock
 import mongomock
-from src.adk.mongodb.sessions.mongodb_session_service import MongodbSessionService
+from src.adk_mongodb_session.mongodb.sessions.mongodb_session_service import MongodbSessionService
 from google.adk.sessions.state import State
 
 
@@ -15,7 +15,7 @@ class TestMongodbSessionService(unittest.TestCase):
         self.user_id = "test_user"
         self.session_id = "test_session_id"
 
-    @patch("src.adk.mongodb.sessions.mongodb_session_service.MongoClient", new=mongomock.MongoClient)
+    @patch("src.adk_mongodb_session.mongodb.sessions.mongodb_session_service.MongoClient", new=mongomock.MongoClient)
     def test_session_lifecycle_with_state_management(self):
         service = MongodbSessionService(
             db_url=self.db_url,
