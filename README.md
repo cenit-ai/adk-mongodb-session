@@ -1,4 +1,4 @@
-# ADK MongoDB Session Service
+# MongoDB Session Service for [Google ADK](https://google.github.io/adk-docs/) (Agent Development Kit)
 
 [![PyPI version](https://badge.fury.io/py/adk-mongodb-session.svg)](https://badge.fury.io/py/adk-mongodb-session)
 [![Python Package CI](https://github.com/SergeySetti/adk-mongodb-session/actions/workflows/python-package.yml/badge.svg)](https://github.com/SergeySetti/adk-mongodb-session/actions/workflows/python-package.yml)
