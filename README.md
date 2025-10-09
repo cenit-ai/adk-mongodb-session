@@ -36,7 +36,7 @@ First, instantiate the `MongodbSessionService` with your MongoDB connection deta
 
 ```python
 import asyncio
-from adk.mongodb.sessions import MongodbSessionService
+from adk_mongodb_session.mongodb.sessions import MongodbSessionService
 
 # Initialize the service
 session_service = MongodbSessionService(
