@@ -74,7 +74,6 @@ class TestMongodbSessionService(unittest.TestCase):
                     f"{State.USER_PREFIX}user_key": "user_value",
                 }, s.state)
 
-
             # 5. Delete the session
             await service.delete_session(
                 app_name=self.app_name, user_id=self.user_id, session_id=self.session_id
