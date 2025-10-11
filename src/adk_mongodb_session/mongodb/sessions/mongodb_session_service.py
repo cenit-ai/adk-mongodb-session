@@ -300,7 +300,7 @@ class MongodbSessionService(BaseSessionService):
             "actions": pickle.dumps(event.actions),
             "branch": event.branch,
             "timestamp": now,
-            "long_running_tool_ids": list(event.long_running_tool_ids),
+            "long_running_tool_ids": list(event.long_running_tool_ids if event.long_running_tool_ids else []),
             "partial": event.partial,
             "turn_complete": event.turn_complete,
             "error_code": event.error_code,
