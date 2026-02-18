@@ -41,7 +41,7 @@ class TestMongodbSessionService(unittest.TestCase):
             session = await service.create_session(
                 app_name=self.app_name,
                 user_id=self.user_id,
-                session_id=self.session_id,
+                session_id=str(self.session_id),
                 state=initial_state,
             )
 
@@ -63,14 +63,18 @@ class TestMongodbSessionService(unittest.TestCase):
 
             # 2. Get the session and verify merged state
             retrieved_session = await service.get_session(
-                app_name=self.app_name, user_id=self.user_id, session_id=self.session_id
+                app_name=self.app_name,
+                user_id=self.user_id,
+                session_id=str(self.session_id),
             )
             self.assertEqual(initial_state, retrieved_session.state)
 
             # 3. Create another session for the same user
             session2_id = ObjectId()
             await service.create_session(
-                app_name=self.app_name, user_id=self.user_id, session_id=session2_id
+                app_name=self.app_name,
+                user_id=self.user_id,
+                session_id=str(session2_id),
             )
 
             # 4. List sessions and verify merged state in each

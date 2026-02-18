@@ -65,7 +65,7 @@ class TestMongodbSessionService(unittest.TestCase):
             retrieved_session = await service.get_session(
                 app_name=self.app_name,
                 user_id=self.user_id,
-                session_id=ObjectId(session.id),
+                session_id=session.id,
             )
             self.assertEqual(initial_state, retrieved_session.state)
 

@@ -57,7 +57,7 @@ class MongodbSessionService(BaseSessionService):
         app_name: str,
         user_id: str,
         state: Optional[dict[str, Any]] = None,
-        session_id: Optional[ObjectId] = None,
+        session_id: Optional[str] = None,
     ) -> Session:
         app_state_doc = self.app_states_collection.find_one({"_id": app_name})
         user_state_doc = self.user_states_collection.find_one(
@@ -84,11 +84,9 @@ class MongodbSessionService(BaseSessionService):
             )
 
         if session_id is None:
-            session_id = ObjectId()
+            session_id = str(ObjectId())
 
-        new_session = MongodbSession(
-            app_name=app_name, user_id=user_id, id=str(session_id)
-        )
+        new_session = MongodbSession(app_name=app_name, user_id=user_id, id=session_id)
 
         now = datetime.now()
         session_doc = {
@@ -111,11 +109,11 @@ class MongodbSessionService(BaseSessionService):
         *,
         app_name: str,
         user_id: str,
-        session_id: ObjectId,
+        session_id: str,
         config: Optional[GetSessionConfig] = None,
     ) -> Optional[Session]:
         session_doc = self.sessions_collection.find_one(
-            {"_id": session_id, "app_name": app_name, "user_id": user_id}
+            {"_id": ObjectId(session_id), "app_name": app_name, "user_id": user_id}
         )
         if not session_doc:
             return None
@@ -139,7 +137,7 @@ class MongodbSessionService(BaseSessionService):
             timestamp_filter = {}
 
         events_cursor = self.events_collection.find(
-            {"session_id": session_id, **timestamp_filter}
+            {"session_id": ObjectId(session_id), **timestamp_filter}
         ).sort("timestamp", -1)
 
         if config and config.num_recent_events:
@@ -174,7 +172,7 @@ class MongodbSessionService(BaseSessionService):
         return MongodbSession(
             app_name=app_name,
             user_id=user_id,
-            id=str(session_id),
+            id=session_id,
             state=merged_state,
             events=events,
             last_update_time=update_time.timestamp() if update_time else None,
