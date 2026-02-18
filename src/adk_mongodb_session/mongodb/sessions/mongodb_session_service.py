@@ -3,6 +3,7 @@ import pickle
 from datetime import datetime
 from typing import Any, Optional
 
+from bson import ObjectId
 from google.adk.events.event import Event
 from google.adk.sessions import _session_util
 from google.adk.sessions.base_session_service import (
@@ -12,6 +13,7 @@ from google.adk.sessions.base_session_service import (
 )
 from google.adk.sessions.session import Session
 from google.adk.sessions.state import State
+from google.genai.types import Content, GroundingMetadata
 from pymongo import MongoClient
 
 from .mongodb_session import MongodbSession
@@ -82,13 +84,14 @@ class MongodbSessionService(BaseSessionService):
                 upsert=True,
             )
 
-        new_session = MongodbSession(
-            app_name=app_name, user_id=user_id, id=session_id
-        )
+        if session_id is None:
+            session_id = str(ObjectId())
+
+        new_session = MongodbSession(app_name=app_name, user_id=user_id, id=session_id)
 
         now = datetime.now()
         session_doc = {
-            "_id": new_session.id,
+            "_id": ObjectId(new_session.id),
             "app_name": app_name,
             "user_id": user_id,
             "state": session_state,
@@ -111,7 +114,7 @@ class MongodbSessionService(BaseSessionService):
         config: Optional[GetSessionConfig] = None,
     ) -> Optional[Session]:
         session_doc = self.sessions_collection.find_one(
-            {"_id": session_id, "app_name": app_name, "user_id": user_id}
+            {"_id": ObjectId(session_id), "app_name": app_name, "user_id": user_id}
         )
         if not session_doc:
             return None
@@ -150,14 +153,20 @@ class MongodbSessionService(BaseSessionService):
                     actions=pickle.loads(event_doc.get("actions")),
                     branch=event_doc.get("branch"),
                     timestamp=event_doc.get("timestamp").timestamp(),
-                    long_running_tool_ids=set(event_doc.get("long_running_tool_ids", [])),
+                    long_running_tool_ids=set(
+                        event_doc.get("long_running_tool_ids", [])
+                    ),
                     partial=event_doc.get("partial"),
                     turn_complete=event_doc.get("turn_complete"),
                     error_code=event_doc.get("error_code"),
                     error_message=event_doc.get("error_message"),
                     interrupted=event_doc.get("interrupted"),
-                    content=_session_util.decode_content(event_doc.get("content")),
-                    grounding_metadata=_session_util.decode_grounding_metadata(event_doc.get("grounding_metadata")),
+                    content=_session_util.decode_model(
+                        event_doc.get("content"), Content
+                    ),
+                    grounding_metadata=_session_util.decode_model(
+                        event_doc.get("grounding_metadata"), GroundingMetadata
+                    ),
                     custom_metadata=event_doc.get("custom_metadata"),
                 )
             )
@@ -203,14 +212,18 @@ class MongodbSessionService(BaseSessionService):
                         actions=pickle.loads(event_doc.get("actions")),
                         branch=event_doc.get("branch"),
                         timestamp=event_doc.get("timestamp").timestamp(),
-                        long_running_tool_ids=set(event_doc.get("long_running_tool_ids", [])),
+                        long_running_tool_ids=set(
+                            event_doc.get("long_running_tool_ids", [])
+                        ),
                         partial=event_doc.get("partial"),
                         turn_complete=event_doc.get("turn_complete"),
                         error_code=event_doc.get("error_code"),
                         error_message=event_doc.get("error_message"),
                         interrupted=event_doc.get("interrupted"),
                         content=_session_util.decode_content(event_doc.get("content")),
-                        grounding_metadata=_session_util.decode_grounding_metadata(event_doc.get("grounding_metadata")),
+                        grounding_metadata=_session_util.decode_grounding_metadata(
+                            event_doc.get("grounding_metadata")
+                        ),
                         custom_metadata=event_doc.get("custom_metadata"),
                     )
                 )
@@ -218,7 +231,7 @@ class MongodbSessionService(BaseSessionService):
                 MongodbSession(
                     app_name=app_name,
                     user_id=user_id,
-                    id=session_doc.get("_id"),
+                    id=str(session_doc.get("_id")),
                     state=merged_state,
                     events=events,
                     last_update_time=update_time.timestamp() if update_time else None,
@@ -239,7 +252,11 @@ class MongodbSessionService(BaseSessionService):
             return event
 
         session_doc = self.sessions_collection.find_one(
-            {"_id": session.id, "app_name": session.app_name, "user_id": session.user_id}
+            {
+                "_id": ObjectId(session.id),
+                "app_name": session.app_name,
+                "user_id": session.user_id,
+            }
         )
         if not session_doc:
             raise ValueError(f"Session with id {session.id} not found.")
@@ -300,14 +317,22 @@ class MongodbSessionService(BaseSessionService):
             "actions": pickle.dumps(event.actions),
             "branch": event.branch,
             "timestamp": now,
-            "long_running_tool_ids": list(event.long_running_tool_ids if event.long_running_tool_ids else []),
+            "long_running_tool_ids": list(
+                event.long_running_tool_ids if event.long_running_tool_ids else []
+            ),
             "partial": event.partial,
             "turn_complete": event.turn_complete,
             "error_code": event.error_code,
             "error_message": event.error_message,
             "interrupted": event.interrupted,
-            "content": event.content.model_dump(exclude_none=True, mode="json") if event.content else None,
-            "grounding_metadata": event.grounding_metadata.model_dump(exclude_none=True, mode="json") if event.grounding_metadata else None,
+            "content": event.content.model_dump(exclude_none=True, mode="json")
+            if event.content
+            else None,
+            "grounding_metadata": event.grounding_metadata.model_dump(
+                exclude_none=True, mode="json"
+            )
+            if event.grounding_metadata
+            else None,
             "custom_metadata": event.custom_metadata,
         }
         self.events_collection.insert_one(event_doc)

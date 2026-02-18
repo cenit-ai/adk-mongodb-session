@@ -18,7 +18,6 @@ class TestMongodbSessionService(unittest.TestCase):
         self.collection_prefix = "test"
         self.app_name = "test_app"
         self.user_id = "test_user"
-        self.session_id = ObjectId()
 
     @patch(
         "src.adk_mongodb_session.mongodb.sessions.mongodb_session_service.MongoClient",
@@ -41,7 +40,6 @@ class TestMongodbSessionService(unittest.TestCase):
             session = await service.create_session(
                 app_name=self.app_name,
                 user_id=self.user_id,
-                session_id=str(self.session_id),
                 state=initial_state,
             )
 
@@ -55,7 +53,9 @@ class TestMongodbSessionService(unittest.TestCase):
             user_state_doc = service.user_states_collection.find_one(
                 {"_id": f"{self.app_name}_{self.user_id}"}
             )
-            session_doc = service.sessions_collection.find_one({"_id": self.session_id})
+            session_doc = service.sessions_collection.find_one(
+                {"_id": ObjectId(session.id)}
+            )
 
             self.assertEqual({"app_key": "app_value"}, app_state_doc["state"])
             self.assertEqual({"user_key": "user_value"}, user_state_doc["state"])
@@ -65,17 +65,12 @@ class TestMongodbSessionService(unittest.TestCase):
             retrieved_session = await service.get_session(
                 app_name=self.app_name,
                 user_id=self.user_id,
-                session_id=str(self.session_id),
+                session_id=session.id,
             )
             self.assertEqual(initial_state, retrieved_session.state)
 
             # 3. Create another session for the same user
-            session2_id = ObjectId()
-            await service.create_session(
-                app_name=self.app_name,
-                user_id=self.user_id,
-                session_id=str(session2_id),
-            )
+            await service.create_session(app_name=self.app_name, user_id=self.user_id)
 
             # 4. List sessions and verify merged state in each
             list_response = await service.list_sessions(
@@ -85,7 +80,7 @@ class TestMongodbSessionService(unittest.TestCase):
             for s in list_response.sessions:
                 self.assertEqual(
                     initial_state
-                    if ObjectId(s.id) == self.session_id
+                    if s.id == session.id
                     else {
                         f"{State.APP_PREFIX}app_key": "app_value",
                         f"{State.USER_PREFIX}user_key": "user_value",
@@ -95,11 +90,9 @@ class TestMongodbSessionService(unittest.TestCase):
 
             # 5. Delete the session
             await service.delete_session(
-                app_name=self.app_name, user_id=self.user_id, session_id=self.session_id
+                app_name=self.app_name, user_id=self.user_id, session_id=session.id
             )
-            self.assertIsNone(
-                service.sessions_collection.find_one({"_id": self.session_id})
-            )
+            self.assertIsNone(service.sessions_collection.find_one({"_id": session.id}))
 
         asyncio.run(run_test())
 

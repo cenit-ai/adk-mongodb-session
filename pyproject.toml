@@ -1,6 +1,6 @@
 [project]
 name = "adk-mongodb-session"
-version = "v1.0.9"
+version = "v1.1.0"
 description = "A project to integrate together Agent Development Kit (ADK) with MongoDB session management as backend storage."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,7 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "mongomock~=4.1.2",
+    "mongomock>=4.1.2",
 ]
 
 [build-system]
