@@ -57,7 +57,7 @@ class MongodbSessionService(BaseSessionService):
         app_name: str,
         user_id: str,
         state: Optional[dict[str, Any]] = None,
-        session_id: Optional[str] = None,
+        session_id: Optional[ObjectId] = None,
     ) -> Session:
         app_state_doc = self.app_states_collection.find_one({"_id": app_name})
         user_state_doc = self.user_states_collection.find_one(
@@ -84,13 +84,15 @@ class MongodbSessionService(BaseSessionService):
             )
 
         if session_id is None:
-            session_id = str(ObjectId())
+            session_id = ObjectId()
 
-        new_session = MongodbSession(app_name=app_name, user_id=user_id, id=session_id)
+        new_session = MongodbSession(
+            app_name=app_name, user_id=user_id, id=str(session_id)
+        )
 
         now = datetime.now()
         session_doc = {
-            "_id": new_session.id,
+            "_id": ObjectId(new_session.id),
             "app_name": app_name,
             "user_id": user_id,
             "state": session_state,
@@ -172,7 +174,7 @@ class MongodbSessionService(BaseSessionService):
         return MongodbSession(
             app_name=app_name,
             user_id=user_id,
-            id=session_id,
+            id=str(session_id),
             state=merged_state,
             events=events,
             last_update_time=update_time.timestamp() if update_time else None,
@@ -228,7 +230,7 @@ class MongodbSessionService(BaseSessionService):
                 MongodbSession(
                     app_name=app_name,
                     user_id=user_id,
-                    id=session_doc.get("_id"),
+                    id=str(session_doc.get("_id")),
                     state=merged_state,
                     events=events,
                     last_update_time=update_time.timestamp() if update_time else None,

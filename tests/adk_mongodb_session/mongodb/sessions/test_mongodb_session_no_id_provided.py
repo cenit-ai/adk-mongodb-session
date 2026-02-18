@@ -2,6 +2,7 @@ import asyncio
 import unittest
 from unittest.mock import patch
 
+from bson import ObjectId
 from google.adk.sessions.state import State
 from mongomock import MongoClient
 
@@ -52,7 +53,9 @@ class TestMongodbSessionService(unittest.TestCase):
             user_state_doc = service.user_states_collection.find_one(
                 {"_id": f"{self.app_name}_{self.user_id}"}
             )
-            session_doc = service.sessions_collection.find_one({"_id": session.id})
+            session_doc = service.sessions_collection.find_one(
+                {"_id": ObjectId(session.id)}
+            )
 
             self.assertEqual({"app_key": "app_value"}, app_state_doc["state"])
             self.assertEqual({"user_key": "user_value"}, user_state_doc["state"])
@@ -60,7 +63,9 @@ class TestMongodbSessionService(unittest.TestCase):
 
             # 2. Get the session and verify merged state
             retrieved_session = await service.get_session(
-                app_name=self.app_name, user_id=self.user_id, session_id=session.id
+                app_name=self.app_name,
+                user_id=self.user_id,
+                session_id=ObjectId(session.id),
             )
             self.assertEqual(initial_state, retrieved_session.state)
 
