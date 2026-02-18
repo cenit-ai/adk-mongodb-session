@@ -16,7 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "mongomock~=4.1.2",
+    "mongomock>=4.1.2",
 ]
 
 [build-system]
