@@ -18,7 +18,7 @@ class TestMongodbSessionService(unittest.TestCase):
         self.collection_prefix = "test"
         self.app_name = "test_app"
         self.user_id = "test_user"
-        self.session_id = ObjectId()
+        self.session_id = str(ObjectId())
 
     @patch(
         "src.adk_mongodb_session.mongodb.sessions.mongodb_session_service.MongoClient",
@@ -68,7 +68,7 @@ class TestMongodbSessionService(unittest.TestCase):
             self.assertEqual(initial_state, retrieved_session.state)
 
             # 3. Create another session for the same user
-            session2_id = ObjectId()
+            session2_id = str(ObjectId())
             await service.create_session(
                 app_name=self.app_name, user_id=self.user_id, session_id=session2_id
             )

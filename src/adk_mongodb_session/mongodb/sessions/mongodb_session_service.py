@@ -57,7 +57,7 @@ class MongodbSessionService(BaseSessionService):
         app_name: str,
         user_id: str,
         state: Optional[dict[str, Any]] = None,
-        session_id: Optional[ObjectId] = None,
+        session_id: Optional[str] = None,
     ) -> Session:
         app_state_doc = self.app_states_collection.find_one({"_id": app_name})
         user_state_doc = self.user_states_collection.find_one(
@@ -84,7 +84,7 @@ class MongodbSessionService(BaseSessionService):
             )
 
         if session_id is None:
-            session_id = ObjectId()
+            session_id = str(ObjectId())
 
         new_session = MongodbSession(app_name=app_name, user_id=user_id, id=session_id)
 

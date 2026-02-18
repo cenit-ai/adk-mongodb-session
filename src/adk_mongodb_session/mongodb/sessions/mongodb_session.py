@@ -16,4 +16,4 @@ PyObjectId = Annotated[
 class MongodbSession(Session):
     """A session object that is managed by the MongodbSessionService."""
 
-    id: PyObjectId = Field(alias="_id")
+    pass
