@@ -13,6 +13,7 @@ from google.adk.sessions.base_session_service import (
 )
 from google.adk.sessions.session import Session
 from google.adk.sessions.state import State
+from google.genai.types import Content, GroundingMetadata
 from pymongo import MongoClient
 
 from .mongodb_session import MongodbSession
@@ -137,7 +138,7 @@ class MongodbSessionService(BaseSessionService):
             timestamp_filter = {}
 
         events_cursor = self.events_collection.find(
-            {"session_id": ObjectId(session_id), **timestamp_filter}
+            {"session_id": session_id, **timestamp_filter}
         ).sort("timestamp", -1)
 
         if config and config.num_recent_events:
@@ -160,9 +161,11 @@ class MongodbSessionService(BaseSessionService):
                     error_code=event_doc.get("error_code"),
                     error_message=event_doc.get("error_message"),
                     interrupted=event_doc.get("interrupted"),
-                    content=_session_util.decode_content(event_doc.get("content")),
-                    grounding_metadata=_session_util.decode_grounding_metadata(
-                        event_doc.get("grounding_metadata")
+                    content=_session_util.decode_model(
+                        event_doc.get("content"), Content
+                    ),
+                    grounding_metadata=_session_util.decode_model(
+                        event_doc.get("grounding_metadata"), GroundingMetadata
                     ),
                     custom_metadata=event_doc.get("custom_metadata"),
                 )
@@ -250,7 +253,7 @@ class MongodbSessionService(BaseSessionService):
 
         session_doc = self.sessions_collection.find_one(
             {
-                "_id": session.id,
+                "_id": ObjectId(session.id),
                 "app_name": session.app_name,
                 "user_id": session.user_id,
             }
