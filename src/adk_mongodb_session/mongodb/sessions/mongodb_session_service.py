@@ -182,7 +182,7 @@ class MongodbSessionService(BaseSessionService):
         )
 
     async def list_sessions(
-        self, *, app_name: str, user_id: str
+        self, *, app_name: str, user_id: Optional[str] = None
     ) -> ListSessionsResponse:
         app_state_doc = self.app_states_collection.find_one({"_id": app_name})
         user_state_doc = self.user_states_collection.find_one(
@@ -193,47 +193,23 @@ class MongodbSessionService(BaseSessionService):
         user_state = user_state_doc.get("state", {}) if user_state_doc else {}
 
         sessions = []
-        for session_doc in self.sessions_collection.find(
-            {"app_name": app_name, "user_id": user_id}
-        ):
+
+        filter = {"app_name": app_name}
+        if user_id is not None:
+            filter["user_id"] = user_id
+
+        for session_doc in self.sessions_collection.find(filter):
             session_state = session_doc.get("state", {})
             merged_state = _merge_state(app_state, user_state, session_state)
             update_time = session_doc.get("update_time")
+            user_id = session_doc.get("user_id")
 
-            events = []
-            for event_doc in self.events_collection.find(
-                {"session_id": session_doc.get("_id")}
-            ).sort("timestamp", 1):
-                events.append(
-                    Event(
-                        id=event_doc.get("_id"),
-                        invocation_id=event_doc.get("invocation_id"),
-                        author=event_doc.get("author"),
-                        actions=pickle.loads(event_doc.get("actions")),
-                        branch=event_doc.get("branch"),
-                        timestamp=event_doc.get("timestamp").timestamp(),
-                        long_running_tool_ids=set(
-                            event_doc.get("long_running_tool_ids", [])
-                        ),
-                        partial=event_doc.get("partial"),
-                        turn_complete=event_doc.get("turn_complete"),
-                        error_code=event_doc.get("error_code"),
-                        error_message=event_doc.get("error_message"),
-                        interrupted=event_doc.get("interrupted"),
-                        content=_session_util.decode_content(event_doc.get("content")),
-                        grounding_metadata=_session_util.decode_grounding_metadata(
-                            event_doc.get("grounding_metadata")
-                        ),
-                        custom_metadata=event_doc.get("custom_metadata"),
-                    )
-                )
             sessions.append(
                 MongodbSession(
                     app_name=app_name,
                     user_id=user_id,
                     id=str(session_doc.get("_id")),
                     state=merged_state,
-                    events=events,
                     last_update_time=update_time.timestamp() if update_time else None,
                 )
             )
