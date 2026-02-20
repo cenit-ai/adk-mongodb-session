@@ -182,7 +182,7 @@ class MongodbSessionService(BaseSessionService):
         )
 
     async def list_sessions(
-        self, *, app_name: str, user_id: str
+        self, *, app_name: str, user_id: Optional[str] = None
     ) -> ListSessionsResponse:
         app_state_doc = self.app_states_collection.find_one({"_id": app_name})
         user_state_doc = self.user_states_collection.find_one(
@@ -193,9 +193,12 @@ class MongodbSessionService(BaseSessionService):
         user_state = user_state_doc.get("state", {}) if user_state_doc else {}
 
         sessions = []
-        for session_doc in self.sessions_collection.find(
-            {"app_name": app_name, "user_id": user_id}
-        ):
+
+        filter = {"app_name": app_name}
+        if user_id is not None:
+            filter["user_id"] = user_id
+
+        for session_doc in self.sessions_collection.find(filter):
             session_state = session_doc.get("state", {})
             merged_state = _merge_state(app_state, user_state, session_state)
             update_time = session_doc.get("update_time")
