@@ -218,9 +218,9 @@ class MongodbSessionService(BaseSessionService):
     async def delete_session(
         self, *, app_name: str, user_id: str, session_id: str
     ) -> None:
-        self.events_collection.delete_many({"session_id": session_id})
+        self.events_collection.delete_many({"session_id": ObjectId(session_id)})
         self.sessions_collection.delete_one(
-            {"_id": session_id, "app_name": app_name, "user_id": user_id}
+            {"_id": ObjectId(session_id), "app_name": app_name, "user_id": user_id}
         )
 
     async def append_event(self, session: Session, event: Event) -> Event:
