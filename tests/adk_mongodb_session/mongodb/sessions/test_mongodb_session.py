@@ -95,10 +95,12 @@ class TestMongodbSessionService(unittest.TestCase):
 
             # 5. Delete the session
             await service.delete_session(
-                app_name=self.app_name, user_id=self.user_id, session_id=self.session_id
+                app_name=self.app_name,
+                user_id=self.user_id,
+                session_id=str(self.session_id),
             )
             self.assertIsNone(
-                service.sessions_collection.find_one({"_id": self.session_id})
+                service.sessions_collection.find_one({"_id": str(self.session_id)})
             )
 
         asyncio.run(run_test())
