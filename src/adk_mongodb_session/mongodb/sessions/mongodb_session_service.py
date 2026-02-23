@@ -14,9 +14,18 @@ from google.adk.sessions.base_session_service import (
 from google.adk.sessions.session import Session
 from google.adk.sessions.state import State
 from google.genai.types import Content, GroundingMetadata
+from pydantic import Field
 from pymongo import MongoClient
 
 from .mongodb_session import MongodbSession
+
+
+class SessionWithCreateTime(Session):
+    create_time: float
+
+
+class ListSessionsResponseWithCreateTime(ListSessionsResponse):
+    sessions: list[SessionWithCreateTime] = Field(default_factory=list)
 
 
 def _extract_state_delta(state: dict[str, Any]):
@@ -320,3 +329,24 @@ class MongodbSessionService(BaseSessionService):
 
         await super().append_event(session=session, event=event)
         return event
+
+    async def list_sessions_with_create_time(
+        self,
+    ) -> ListSessionsResponseWithCreateTime:
+        sessions: list[SessionWithCreateTime] = []
+        for session_doc in self.sessions_collection.find():
+            sessions.append(
+                SessionWithCreateTime(
+                    id=str(session_doc.get("_id")),
+                    app_name=session_doc.get("app_name"),
+                    user_id=session_doc.get("user_id"),
+                    state=session_doc.get("state"),
+                    last_update_time=session_doc.get("update_time").timestamp()
+                    if session_doc.get("update_time")
+                    else None,
+                    create_time=session_doc.get("create_time").timestamp()
+                    if session_doc.get("create_time")
+                    else None,
+                )
+            )
+        return sessions
