@@ -1,6 +1,6 @@
 [project]
 name = "adk-mongodb-session"
-version = "v1.1.5"
+version = "v1.1.6"
 description = "A project to integrate together Agent Development Kit (ADK) with MongoDB session management as backend storage."
 readme = "README.md"
 requires-python = ">=3.11"

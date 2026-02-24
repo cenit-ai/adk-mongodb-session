@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 from bson import ObjectId
 from google.adk.events.event import Event
+from google.adk.events.event_actions import EventActions
 from google.adk.sessions import _session_util
 from google.adk.sessions.base_session_service import (
     BaseSessionService,
@@ -14,7 +15,7 @@ from google.adk.sessions.base_session_service import (
 from google.adk.sessions.session import Session
 from google.adk.sessions.state import State
 from google.genai.types import Content, GroundingMetadata
-from pydantic import Field
+from pydantic import Field, ValidationError
 from pymongo import MongoClient
 
 from .mongodb_session import MongodbEvent, MongodbSession
@@ -156,13 +157,18 @@ class MongodbSessionService(BaseSessionService):
             events_cursor = events_cursor.limit(config.num_recent_events)
 
         for event_doc in reversed(list(events_cursor)):
+            try:
+                actions = EventActions.model_validate(event_doc.get("actions"))
+            except ValidationError as e:
+                print(f"Error validating actions: {e}")
+                actions = EventActions()
             events.append(
                 MongodbEvent(
                     id=str(event_doc.get("_id")),
                     session_id=str(event_doc.get("session_id")),
                     invocation_id=event_doc.get("invocation_id"),
                     author=event_doc.get("author"),
-                    actions=pickle.loads(event_doc.get("actions")),
+                    actions=actions,
                     branch=event_doc.get("branch"),
                     timestamp=event_doc.get("timestamp").timestamp(),
                     long_running_tool_ids=set(
@@ -303,7 +309,7 @@ class MongodbSessionService(BaseSessionService):
             "session_id": ObjectId(session.id),
             "invocation_id": event.invocation_id,
             "author": event.author,
-            "actions": pickle.dumps(event.actions),
+            "actions": event.actions.model_dump(exclude_none=True, mode="json"),
             "branch": event.branch,
             "timestamp": now,
             "long_running_tool_ids": list(
