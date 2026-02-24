@@ -122,6 +122,8 @@ class MongodbSessionService(BaseSessionService):
         session_id: str,
         config: Optional[GetSessionConfig] = None,
     ) -> Optional[Session]:
+        if not ObjectId.is_valid(session_id):
+            return None
         session_doc = self.sessions_collection.find_one(
             {"_id": ObjectId(session_id), "app_name": app_name, "user_id": user_id}
         )
