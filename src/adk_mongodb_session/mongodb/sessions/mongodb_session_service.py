@@ -17,7 +17,7 @@ from google.genai.types import Content, GroundingMetadata
 from pydantic import Field
 from pymongo import MongoClient
 
-from .mongodb_session import MongodbSession
+from .mongodb_session import MongodbEvent, MongodbSession
 
 
 class SessionWithCreateTime(Session):
@@ -147,7 +147,7 @@ class MongodbSessionService(BaseSessionService):
             timestamp_filter = {}
 
         events_cursor = self.events_collection.find(
-            {"session_id": session_id, **timestamp_filter}
+            {"session_id": ObjectId(session_id), **timestamp_filter}
         ).sort("timestamp", -1)
 
         if config and config.num_recent_events:
@@ -155,8 +155,9 @@ class MongodbSessionService(BaseSessionService):
 
         for event_doc in reversed(list(events_cursor)):
             events.append(
-                Event(
-                    id=event_doc.get("_id"),
+                MongodbEvent(
+                    id=str(event_doc.get("_id")),
+                    session_id=str(event_doc.get("session_id")),
                     invocation_id=event_doc.get("invocation_id"),
                     author=event_doc.get("author"),
                     actions=pickle.loads(event_doc.get("actions")),
@@ -292,11 +293,12 @@ class MongodbSessionService(BaseSessionService):
             )
 
         now = datetime.now()
+        id = ObjectId()
         event_doc = {
-            "_id": event.id,
+            "_id": id,
             "app_name": session.app_name,
             "user_id": session.user_id,
-            "session_id": session.id,
+            "session_id": ObjectId(session.id),
             "invocation_id": event.invocation_id,
             "author": event.author,
             "actions": pickle.dumps(event.actions),
@@ -322,9 +324,7 @@ class MongodbSessionService(BaseSessionService):
         }
         self.events_collection.insert_one(event_doc)
 
-        self.sessions_collection.update_one(
-            {"_id": session.id}, {"$set": {"update_time": now}}
-        )
+        self.sessions_collection.update_one({"_id": id}, {"$set": {"update_time": now}})
         session.last_update_time = now.timestamp()
 
         await super().append_event(session=session, event=event)
