@@ -297,7 +297,7 @@ class MongodbSessionService(BaseSessionService):
         if session_state_delta:
             session_state.update(session_state_delta)
             self.sessions_collection.update_one(
-                {"_id": session.id}, {"$set": {"state": session_state}}
+                {"_id": ObjectId(session.id)}, {"$set": {"state": session_state}}
             )
 
         now = datetime.now()
