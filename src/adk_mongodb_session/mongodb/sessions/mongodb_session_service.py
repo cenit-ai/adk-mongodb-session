@@ -1,5 +1,4 @@
 import copy
-import pickle
 from datetime import datetime
 from typing import Any, Optional
 
@@ -70,9 +69,12 @@ class MongodbSessionService(BaseSessionService):
         state: Optional[dict[str, Any]] = None,
         session_id: Optional[str] = None,
     ) -> Session:
-        app_state_doc = self.app_states_collection.find_one({"_id": app_name})
+        app_state_doc = self.app_states_collection.find_one({"app_name": app_name})
         user_state_doc = self.user_states_collection.find_one(
-            {"_id": f"{app_name}_{user_id}"}
+            {
+                "user_id": user_id,
+                "app_name": app_name,
+            }
         )
 
         app_state = app_state_doc.get("state", {}) if app_state_doc else {}
@@ -83,13 +85,16 @@ class MongodbSessionService(BaseSessionService):
         if app_state_delta:
             app_state.update(app_state_delta)
             self.app_states_collection.update_one(
-                {"_id": app_name}, {"$set": {"state": app_state}}, upsert=True
+                {"app_name": app_name}, {"$set": {"state": app_state}}, upsert=True
             )
 
         if user_state_delta:
             user_state.update(user_state_delta)
             self.user_states_collection.update_one(
-                {"_id": f"{app_name}_{user_id}"},
+                {
+                    "user_id": user_id,
+                    "app_name": app_name,
+                },
                 {"$set": {"state": user_state}},
                 upsert=True,
             )
@@ -131,9 +136,12 @@ class MongodbSessionService(BaseSessionService):
         if not session_doc:
             return None
 
-        app_state_doc = self.app_states_collection.find_one({"_id": app_name})
+        app_state_doc = self.app_states_collection.find_one({"app_name": app_name})
         user_state_doc = self.user_states_collection.find_one(
-            {"_id": f"{app_name}_{user_id}"}
+            {
+                "user_id": user_id,
+                "app_name": app_name,
+            }
         )
 
         app_state = app_state_doc.get("state", {}) if app_state_doc else {}
@@ -202,9 +210,12 @@ class MongodbSessionService(BaseSessionService):
     async def list_sessions(
         self, *, app_name: str, user_id: Optional[str] = None
     ) -> ListSessionsResponse:
-        app_state_doc = self.app_states_collection.find_one({"_id": app_name})
+        app_state_doc = self.app_states_collection.find_one({"app_name": app_name})
         user_state_doc = self.user_states_collection.find_one(
-            {"_id": f"{app_name}_{user_id}"}
+            {
+                "user_id": user_id,
+                "app_name": app_name,
+            }
         )
 
         app_state = app_state_doc.get("state", {}) if app_state_doc else {}
@@ -265,9 +276,14 @@ class MongodbSessionService(BaseSessionService):
                 " Please check if it is a stale session."
             )
 
-        app_state_doc = self.app_states_collection.find_one({"_id": session.app_name})
+        app_state_doc = self.app_states_collection.find_one(
+            {"app_name": session.app_name}
+        )
         user_state_doc = self.user_states_collection.find_one(
-            {"_id": f"{session.app_name}_{session.user_id}"}
+            {
+                "user_id": session.user_id,
+                "app_name": session.app_name,
+            }
         )
 
         app_state = app_state_doc.get("state", {}) if app_state_doc else {}
@@ -285,12 +301,17 @@ class MongodbSessionService(BaseSessionService):
         if app_state_delta:
             app_state.update(app_state_delta)
             self.app_states_collection.update_one(
-                {"_id": session.app_name}, {"$set": {"state": app_state}}, upsert=True
+                {"app_name": session.app_name},
+                {"$set": {"state": app_state}},
+                upsert=True,
             )
         if user_state_delta:
             user_state.update(user_state_delta)
             self.user_states_collection.update_one(
-                {"_id": f"{session.app_name}_{session.user_id}"},
+                {
+                    "user_id": session.user_id,
+                    "app_name": session.app_name,
+                },
                 {"$set": {"state": user_state}},
                 upsert=True,
             )

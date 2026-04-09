@@ -48,10 +48,10 @@ class TestMongodbSessionService(unittest.TestCase):
 
             # Verify state was split correctly in the database
             app_state_doc = service.app_states_collection.find_one(
-                {"_id": self.app_name}
+                {"app_name": self.app_name}
             )
             user_state_doc = service.user_states_collection.find_one(
-                {"_id": f"{self.app_name}_{self.user_id}"}
+                {"user_id": self.user_id, "app_name": self.app_name}
             )
             session_doc = service.sessions_collection.find_one(
                 {"_id": ObjectId(session.id)}
