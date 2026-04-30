@@ -102,6 +102,9 @@ class MongodbSessionService(BaseSessionService):
         if session_id is None:
             session_id = str(ObjectId())
 
+        if not ObjectId.is_valid(session_id):
+            session_id = str(ObjectId())
+
         new_session = MongodbSession(app_name=app_name, user_id=user_id, id=session_id)
 
         now = datetime.now()
